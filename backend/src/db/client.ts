@@ -1,7 +1,6 @@
 import { Pool } from 'pg';
-import path from 'path';
-import fs from 'fs';
 import dotenv from 'dotenv';
+import { schema } from './schema';
 
 dotenv.config();
 
@@ -11,9 +10,6 @@ const pool = new Pool({
 });
 
 export async function initDb() {
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  const schema = fs.readFileSync(schemaPath, 'utf8');
-  
   const client = await pool.connect();
   try {
     await client.query(schema);
