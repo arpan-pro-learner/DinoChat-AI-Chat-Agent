@@ -20,13 +20,13 @@ router.post('/message', async (req: Request, res: Response): Promise<void> => {
 
   try {
     // 1. Get or create session
-    const finalSessionId = ConversationService.createConversation(sessionId);
+    const finalSessionId = await ConversationService.createConversation(sessionId);
 
     // 2. Save user message
-    ConversationService.addMessage(finalSessionId, 'user', message);
+    await ConversationService.addMessage(finalSessionId, 'user', message);
 
     // 3. Fetch history for context window
-    const history = ConversationService.getRecentMessages(finalSessionId, 11); // Fetch one extra to ensure we can start with user
+    const history = await ConversationService.getRecentMessages(finalSessionId, 11); // Fetch one extra to ensure we can start with user
     
     // Map to Gemini format and reverse to chronological order
     let formattedHistory = history.reverse().map(msg => ({
@@ -46,7 +46,7 @@ router.post('/message', async (req: Request, res: Response): Promise<void> => {
     const reply = await generateReply(formattedHistory, message);
 
     // 5. Save AI reply
-    ConversationService.addMessage(finalSessionId, 'ai', reply);
+    await ConversationService.addMessage(finalSessionId, 'ai', reply);
 
     // 6. Return response
     res.json({ reply, sessionId: finalSessionId });
@@ -67,11 +67,11 @@ router.post('/message', async (req: Request, res: Response): Promise<void> => {
 });
 
 // GET /chat/history/:sessionId
-router.get('/history/:sessionId', (req: Request, res: Response): void => {
+router.get('/history/:sessionId', async (req: Request, res: Response): Promise<void> => {
   const { sessionId } = req.params;
   
   try {
-    const messages = ConversationService.getHistory(sessionId as string);
+    const messages = await ConversationService.getHistory(sessionId as string);
     res.json({ messages });
   } catch (error) {
     res.status(500).json({ error: "Could not fetch message history." });

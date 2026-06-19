@@ -1,16 +1,28 @@
-import Database from 'better-sqlite3';
+import { Pool } from 'pg';
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
 
-const DB_PATH = path.join(__dirname, '../../dinochat.db');
+dotenv.config();
 
-const db = new Database(DB_PATH);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
-export function initDb() {
+export async function initDb() {
   const schemaPath = path.join(__dirname, 'schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf8');
-  db.exec(schema);
-  console.log('Database initialized successfully.');
+  
+  const client = await pool.connect();
+  try {
+    await client.query(schema);
+    console.log('Database initialized successfully with PostgreSQL.');
+  } catch (err) {
+    console.error('Database initialization failed:', err);
+  } finally {
+    client.release();
+  }
 }
 
 // Allow running init directly if needed
@@ -18,4 +30,4 @@ if (require.main === module || process.argv.includes('init')) {
   initDb();
 }
 
-export default db;
+export default pool;

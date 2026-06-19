@@ -51,9 +51,10 @@ The application will be available at `http://localhost:5173`.
 ---
 
 ## 🛠️ Database Setup
-DinoChat uses **SQLite** for zero-setup persistence.
-- **Initialization**: Running `npm run db:init` executes the `src/db/schema.sql` file via `better-sqlite3`.
-- **Seeding**: The AI is seeded with domain knowledge (FAQ, shipping, returns) directly via the **System Prompt** in `llm.ts`, ensuring it remains the "source of truth" without complex DB syncing for this MVP.
+DinoChat uses **PostgreSQL** for persistent, production-grade session storage.
+- **Initialization**: The server automatically initializes the schema on startup using `src/db/schema.sql`.
+- **Configuration**: Ensure you have a valid `DATABASE_URL` in your `.env` file (e.g., from Neon.tech or Supabase).
+- **Seeding**: The AI is seeded with domain knowledge (FAQ, shipping, returns) directly via the **System Prompt** in `llm.ts`, ensuring it remains the "source of truth" for store policies.
 
 ---
 
@@ -64,9 +65,9 @@ The project is built with a clear separation of concerns to ensure maintainabili
 ### Backend (Node.js + TS + Express)
 - **Routes Layer**: Handles HTTP requests/responses and input validation (`src/routes`).
 - **Service Layer**: 
-    - `ConversationService`: Manages DB CRUD operations (SQLite).
+    - `ConversationService`: Manages asynchronous DB operations (PostgreSQL).
     - `LLMService`: Orchestrates calls to Google Gemini.
-- **DB Interface**: Singleton pattern for the SQLite client ensuring stable connections.
+- **DB Interface**: Managed connection pool via `pg` (node-postgres) for high-availability.
 
 ### Frontend (React + Vite + Tailwind v4)
 - **Atomic Components**: `MessageBubble`, `MessageList`, and `InputBar` are reusable and focused.
@@ -87,8 +88,8 @@ The project is built with a clear separation of concerns to ensure maintainabili
 ## ⚖️ Trade-offs & Future Improvements
 
 ### Current Trade-offs
-- **SQLite**: Used for ease of evaluation and zero-setup. For true production, I would migrate to **PostgreSQL**.
 - **No SSE/Streaming**: Messages are delivered as full JSON responses. Adding **Server-Sent Events** or **WebSockets** would be the next step for a real-time "typing" feel.
+- **Memory Context**: While persistence is in the DB, the system prompt size is limited. For larger datasets, RAG (Vector Search) would be preferred.
 
 ### If I Had More Time...
 - **Vector Search (RAG)**: If the product catalog grew to thousands of items, I would implement **Vector Search** to pull store knowledge dynamically from a database instead of hardcoding it in the prompt.
